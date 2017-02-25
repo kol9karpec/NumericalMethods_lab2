@@ -48,7 +48,7 @@ TSLE::TSLE(double ** A, int order)
 }
 
 
-double ** TSLE::gauss(double ** b, int count)
+double ** TSLE::gauss(double ** b, int count, double & det)
 {
 	TSLE copyA(*this);
 	copyA.print();
@@ -61,6 +61,13 @@ double ** TSLE::gauss(double ** b, int count)
 			x[i][j] = 0;
 	}
 		
+	double ** copyB = new double*[order];
+	for (int i = 0; i < order; i++)
+	{
+		copyB[i] = new double[count];
+		for (int j = 0; j < count; j++)
+			copyB[i][j] = b[i][j];
+	}
 
 	int curI=0, curJ=0;
 	int notZeroI;
@@ -72,7 +79,6 @@ double ** TSLE::gauss(double ** b, int count)
 			switchRows(notZeroI, curI);
 			//doing Gauss
 			for (int i = 0; i < order; i++)
-			{
 				if (i != curI)
 				{
 					//making current elem zero
@@ -85,27 +91,27 @@ double ** TSLE::gauss(double ** b, int count)
 						//cout << copyA.print() << endl << endl;
 					}
 					for (int j = 0; j < count; j++)
-						b[i][j] -= b[curI][j] * k;	
-				}				
-			}		
+						copyB[i][j] -= copyB[curI][j] * k;	
+				}						
 			curI++; curJ++;
 		}
 		else
-		{
 			return NULL;
-		}
 	}		
 
 	for (int i = 0; i < order; i++)
-	{
 		for (int j = 0; j < count; j++)
-		{
-			x[i][j] = b[i][j] / copyA.A[i][i];
-		}
-	}
+			x[i][j] = copyB[i][j] / copyA.A[i][i];
+	
+	det = 1;
+	for (int i = 0; i < order; i++)
+		det *= copyA.A[i][i];
+
+	for (int i = 0; i < order; i++)
+		delete[] copyB[i];
+	delete[] copyB;
 
 	//copyA.~TSLE();
-
 	return x;
 }
 
@@ -134,6 +140,29 @@ void TSLE::switchCols(int col1, int col2)
 			A[i][col2] = buf;
 		}		
 	}
+}
+
+double ** TSLE::residualsVect(double ** b, int count)
+{
+	double ** resVect = new double*[order];
+	for (int i = 0; i < order; i++)
+		resVect[i] = new double[count];
+
+	double buf = 0;
+	double ** rootsMatr = gauss(b, count,buf);
+
+	for (int vect = 0; vect < count; vect++)
+	{
+		for (int row = 0; row < order; row++)
+		{
+			double sum = 0;
+			for (int elem = 0; elem < order; elem++)
+				sum += A[row][elem] * rootsMatr[elem][vect];
+			resVect[row][vect] = sum - b[row][vect];
+		}		
+	}	
+
+	return resVect;
 }
 
 bool TSLE::searchNotZero(double ** A, int order, int iFrom, int jFrom, int & notZeroI)

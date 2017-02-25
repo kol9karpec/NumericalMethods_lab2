@@ -18,11 +18,13 @@ public:
 	TSLE(TSLE&);
 	TSLE(double ** A, int order);
 
-	double ** gauss(double ** b, int count);
+	double ** gauss(double ** b, int count, double & det);
 	void switchRows(int row1, int row2);
 	void switchCols(int col1, int col2);
-
+	double ** residualsVect(double ** b, int count);
+	
 	static bool searchNotZero(double ** A,int order, int iFrom, int jFrom, int & notZeroI);
+	
 
 	char * print();
 	~TSLE();
