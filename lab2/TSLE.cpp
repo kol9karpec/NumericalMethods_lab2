@@ -48,14 +48,64 @@ TSLE::TSLE(double ** A, int order)
 }
 
 
-int * TSLE::gauss(double * b)
+double ** TSLE::gauss(double ** b, int count)
 {
-	int * x = new int[order];
+	TSLE copyA(*this);
+	copyA.print();
+
+	double ** x = new double*[order];
 	for (int i = 0; i < order; i++)
-		x[i] = 0;
-	int notZeroI, notZeroj;
+	{
+		x[i] = new double[count];
+		for(int j=0;j<count;j++)
+			x[i][j] = 0;
+	}
 		
-	
+
+	int curI=0, curJ=0;
+	int notZeroI;
+	while (curI < this->order)
+	{
+		if (searchNotZero(copyA.A, order,curI, curJ, notZeroI))
+		{
+			//making not zero elem row top 
+			switchRows(notZeroI, curI);
+			//doing Gauss
+			for (int i = 0; i < order; i++)
+			{
+				if (i != curI)
+				{
+					//making current elem zero
+					double k = copyA.A[i][curJ]/copyA.A[curI][curJ];
+					//cout << "k = " << copyA.A[i][curJ] << "/" << copyA.A[curI][curJ] << endl;
+					for (int j = 0; j < order; j++)
+					{
+						if (j == curJ) copyA.A[i][j] = 0;
+						else copyA.A[i][j] -= k*copyA.A[curI][j];
+						//cout << copyA.print() << endl << endl;
+					}
+					for (int j = 0; j < count; j++)
+						b[i][j] -= b[curI][j] * k;	
+				}				
+			}		
+			curI++; curJ++;
+		}
+		else
+		{
+			return NULL;
+		}
+	}		
+
+	for (int i = 0; i < order; i++)
+	{
+		for (int j = 0; j < count; j++)
+		{
+			x[i][j] = b[i][j] / copyA.A[i][i];
+		}
+	}
+
+	//copyA.~TSLE();
+
 	return x;
 }
 
@@ -86,20 +136,15 @@ void TSLE::switchCols(int col1, int col2)
 	}
 }
 
-bool TSLE::searchNotZero(double ** A, int order, int & notZeroI, int & notZeroJ)
+bool TSLE::searchNotZero(double ** A, int order, int iFrom, int jFrom, int & notZeroI)
 {
 	notZeroI = 0;
-	notZeroJ = 0;
-	for (int j = 0; j < order; j++) //searching for first non-zero element
-	{
-		for (int i = 0; i < order; i++)
-			if (A[i][j] != 0)
-			{
-				notZeroI = i;
-				notZeroJ = j;
-				return true;
-			}
-	}
+	for (int i = iFrom; i < order; i++)
+		if (A[i][jFrom] != 0)
+		{
+			notZeroI = i;
+			return true;
+		}
 	return false;
 }
 
@@ -128,10 +173,10 @@ TSLE::~TSLE()
 {
 	for (int i = 0; i < order; i++)
 	{
-		delete(A[i]);
+		delete[](A[i]);
 		A[i] = nullptr;
 	}
-	delete(A);
+	delete[](A);
 	A = nullptr;
 	/*delete(b);
 	b = nullptr;*/
