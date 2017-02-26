@@ -1,5 +1,7 @@
 #include "TSLE.h"
-
+#include <iostream>
+#include <fstream>
+#include <cstring>
 
 
 TSLE::TSLE()
@@ -48,7 +50,7 @@ TSLE::TSLE(double ** A, int order)
 }
 
 
-double ** TSLE::gauss(double ** b, int count, double & det)
+double ** TSLE::gauss(double ** b, int count, double & det, char ** iterations)
 {
 	TSLE copyA(*this);
 	copyA.print();
@@ -71,6 +73,11 @@ double ** TSLE::gauss(double ** b, int count, double & det)
 
 	int curI=0, curJ=0;
 	int notZeroI;
+	if (iterations != NULL)
+	{
+		*iterations = new char[50000];
+		strcpy(*iterations, "");
+	}
 	while (curI < this->order)
 	{
 		if (searchNotZero(copyA.A, order,curI, curJ, notZeroI))
@@ -92,7 +99,29 @@ double ** TSLE::gauss(double ** b, int count, double & det)
 					}
 					for (int j = 0; j < count; j++)
 						copyB[i][j] -= copyB[curI][j] * k;	
-				}						
+				}		
+			//printing current iteration
+			if (iterations != NULL)
+			{
+				char * buf = new char[256];
+				strcat(*iterations, "Iteration #");
+				strcat(*iterations, _itoa(curI,buf,10));
+				strcat(*iterations, "\nMatrix: \n");
+				strcat(*iterations, copyA.print());
+				strcat(*iterations, "\nB matrix: \n");
+				
+				for (int i = 0; i < order; i++)
+				{
+					for (int j = 0; j < count; j++)
+					{
+						strcpy(buf, "");
+						sprintf(buf, "%2.6f",copyB[i][j]);
+						strcat(*iterations, buf);
+						strcat(*iterations, "\t");
+					}
+					strcat(*iterations, "\n");
+				}
+			}			
 			curI++; curJ++;
 		}
 		else
@@ -149,7 +178,7 @@ double ** TSLE::residualsVect(double ** b, int count)
 		resVect[i] = new double[count];
 
 	double buf = 0;
-	double ** rootsMatr = gauss(b, count,buf);
+	double ** rootsMatr = gauss(b, count,buf,NULL);
 
 	for (int vect = 0; vect < count; vect++)
 	{
@@ -175,6 +204,23 @@ bool TSLE::searchNotZero(double ** A, int order, int iFrom, int jFrom, int & not
 			return true;
 		}
 	return false;
+}
+
+double ** TSLE::product(double ** A, double ** B, int order)
+{
+	double ** result = new double*[order];
+	for (int i = 0; i < order; i++)
+		result[i] = new double[order];
+	for (int row = 0; row < order; row++)
+	{
+		for (int col = 0; col < order; col++)
+		{
+			result[row][col] = 0;
+			for (int elem = 0; elem < order; elem++)
+				result[row][col] += A[row][elem] * B[elem][col];
+		}
+	}
+	return result;
 }
 
 char * TSLE::print()

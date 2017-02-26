@@ -59,9 +59,10 @@ int main(int argc, const char* argv[])
 	TSLE matr(A,order);
 	
 	double det = 0;
-	double ** x = matr.gauss(b, countB, det);
+	char ** iterations = new char*[1];
+	double ** x = matr.gauss(b, countB, det, iterations);
 	double buf = 0;
-	double ** reverseMatr = matr.gauss(diagM, order, buf);
+	double ** reverseMatr = matr.gauss(diagM, order, buf,NULL);
 
 	if (x == NULL) out << "Degenerate system!" << endl;
 	else
@@ -75,6 +76,7 @@ int main(int argc, const char* argv[])
 				out << x[i][j] << "\t";
 			out << endl;
 		}
+		out << "-------------------------------------------------------" << endl;
 		out << "Residuals: " << endl;
 		for (int i = 0; i < order; i++)
 		{
@@ -82,7 +84,9 @@ int main(int argc, const char* argv[])
 				out << residuals[i][j] << "\t";
 			out << endl;
 		}
+		out << "-------------------------------------------------------" << endl;
 		out << "Determinant: " << det << endl;
+		out << "-------------------------------------------------------" << endl;
 		out << "Reverse matrix: " << endl;
 		for (int i = 0; i < order; i++)
 		{
@@ -90,6 +94,19 @@ int main(int argc, const char* argv[])
 				out << reverseMatr[i][j] << "\t";
 			out << endl;
 		}
+		out << "-------------------------------------------------------" << endl;
+		double ** product = TSLE::product(A, reverseMatr, order);
+		out << "Product A*A^-1: " << endl;
+		out << setprecision(-(int)log10(EPS / 10));
+		for (int i = 0; i < order; i++)
+		{
+			for (int j = 0; j < order; j++)
+				out << setw(12)<< product[i][j] << "\t";
+			out << endl;
+		}
+		out << "-------------------------------------------------------" << endl;
+		out << *iterations << endl;
+
 	}
 
 	delete[] inFile;
@@ -110,6 +127,8 @@ int main(int argc, const char* argv[])
 	for (int i = 0; i < order; i++)
 		delete[] reverseMatr[i];
 	delete[] reverseMatr;
+
+	delete[] iterations;
 
 	in.close();
 	out.close();
